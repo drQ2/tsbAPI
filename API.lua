@@ -2,6 +2,7 @@ local API = {}
 
 local Players = game:GetService("Players")
 local Player = Players.LocalPlayer
+local RunService = game:GetService("RunService")
 
 API.Camera = function()
     return workspace.CurrentCamera
@@ -37,7 +38,7 @@ end
 
 API.loop = function(c)
     coroutine.wrap(function()
-        game:GetService("RunService").RenderStepped:Connect(c)
+        RunService.RenderStepped:Connect(c)
     end)()
 end
 
