@@ -99,7 +99,7 @@ end
 
 API.PlayAnim = function(ID,timePos)
     local anim = Instance.new("Animation")
-    anim.ID = animationId
+    anim.AnimationId = ID
     local loadedAnim = API.Humanoid().Animator:LoadAnimation(anim)
     if timePos then
         loadedAnim.Priority = Enum.AnimationPriority.Action4
