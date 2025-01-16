@@ -45,7 +45,7 @@ API.OnSpawn = function(c)
     Player.CharacterAdded:Connect(c)
 end
 
-function API.flip(a, b, c)
+API.flip = function(a, b, c)
     local _, ry, _ = API.Camera().CFrame:ToOrientation()
     if API.RootPart() then
         API.RootPart().CFrame = CFrame.new(API.RootPart().CFrame.p) * CFrame.fromOrientation(0, ry, 0)
