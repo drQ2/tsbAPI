@@ -89,7 +89,7 @@ function API.Detect(v, isAccessory, itemName, highlightColor, alertTitle, alertT
     end
 end
 
-local function setTransparency(isInvisible)
+API.setTransparency = function(isInvisible)
     for _, part in pairs(API.chr():GetDescendants()) do
         if part:IsA("BasePart") and part.Transparency ~= 1 then
             part.Transparency = isInvisible and 0.5 or 0
