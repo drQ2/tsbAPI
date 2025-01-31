@@ -20,6 +20,10 @@ API.RootPart = function()
     return API.chr() and API.chr():FindFirstChild("HumanoidRootPart")
 end
 
+API.Animator = function()
+	return API.Humanoid() and API.Humanoid().Animator
+end
+
 API.Bind = function(k,c)
     game:GetService("UserInputService").InputBegan:Connect(function(i,g)
         if not g and i.KeyCode == k then
