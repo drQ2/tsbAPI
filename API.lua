@@ -98,7 +98,7 @@ API.setTransparency = function(isInvisible)
     end
 end
 
-API.AnimPlayed = function(animationIds, callback)
+API.AnimPlayed = function(animationIds,stop,callback)
     for i, id in ipairs(animationIds) do
         animationIds[i] = "rbxassetid://"..tostring(id)
     end
@@ -106,7 +106,7 @@ API.AnimPlayed = function(animationIds, callback)
     Player.CharacterAdded:Connect(function()
         API.Humanoid():FindFirstChildOfClass("Animator").AnimationPlayed:Connect(function(animationTrack)
             if table.find(animationIds, animationTrack.Animation.AnimationId) then
-                callback()
+                if stop then animationTrack:Stop() else callback() end
             end
         end)
     end)
