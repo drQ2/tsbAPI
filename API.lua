@@ -103,15 +103,10 @@ API.AnimPlayed = function(animationIds, callback)
         animationIds[i] = "rbxassetid://"..tostring(id)
     end
     
-    Players.PlayerAdded:Connect(function(player)
-        player.CharacterAdded:Connect(function(character)
-            local animator = character:FindFirstChildOfClass("Humanoid"):FindFirstChildOfClass("Animator")
-            if animator then
-                animator.AnimationPlayed:Connect(function(animationTrack)
-                    if table.find(animationIds, animationTrack.Animation.AnimationId) then
-                        callback()
-                    end
-                end)
+    Player.CharacterAdded:Connect(function()
+        API.Humanoid():FindFirstChildOfClass("Animator").AnimationPlayed:Connect(function(animationTrack)
+            if table.find(animationIds, animationTrack.Animation.AnimationId) then
+                callback()
             end
         end)
     end)
