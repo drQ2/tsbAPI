@@ -114,7 +114,7 @@ end
 
 API.PlayAnim = function(ID,timePos)
     local anim = Instance.new("Animation")
-    anim.AnimationId = ID
+    anim.AnimationId = "rbxassetid://"..tostring(ID)
     local loadedAnim = API.Humanoid().Animator:LoadAnimation(anim)
     if timePos then
         loadedAnim.Priority = Enum.AnimationPriority.Action4
