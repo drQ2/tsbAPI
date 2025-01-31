@@ -98,6 +98,25 @@ API.setTransparency = function(isInvisible)
     end
 end
 
+API.AnimPlayed = function(animationIds, callback)
+    for i, id in ipairs(animationIds) do
+        animationIds[i] = "rbxassetid://"..tostring(id)
+    end
+    
+    Players.PlayerAdded:Connect(function(player)
+        player.CharacterAdded:Connect(function(character)
+            local animator = character:FindFirstChildOfClass("Humanoid"):FindFirstChildOfClass("Animator")
+            if animator then
+                animator.AnimationPlayed:Connect(function(animationTrack)
+                    if table.find(animationIds, animationTrack.Animation.AnimationId) then
+                        callback()
+                    end
+                end)
+            end
+        end)
+    end)
+end
+
 API.PlayAnim = function(ID,timePos)
     local anim = Instance.new("Animation")
     anim.AnimationId = ID
@@ -112,6 +131,17 @@ API.PlayAnim = function(ID,timePos)
     else
         loadedAnim:Play()
     end
+end
+
+API.ClosestPlayer = function()
+    local nearest,distance = nil,math.huge
+	for _, other in pairs(workspace.Live:GetChildren()) do
+		local target = other and other:FindFirstChild("HumanoidRootPart")
+		if other ~= API.chr() and target then
+			local dist = (API.RootPart().Position-target.Position).Magnitude
+			if dist<distance then nearest,distance = target,dist end
+		end
+	end
 end
 
 return API
