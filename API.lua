@@ -157,4 +157,15 @@ API.Nearest = function()
 	return nearest
 end
 
+local VIP = false
+
+API.DashCD = function(state)
+	if not VIP then
+		workspace:SetAttribute("VIPServer",Player.UserId)
+		workspace:SetAttribute("VIPServerOwner",Player.Name)
+		VIP = true
+	end
+	workspace:SetAttribute("NoDashCooldown",state)
+end
+
 return API
