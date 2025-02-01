@@ -149,9 +149,8 @@ API.Nearest = function()
     local closestPlayer = nil
     local shortestDistance = math.huge
     for _, otherPlayer in pairs(workspace.Live:GetChildren()) do
-        if otherPlayer ~= player.Character and otherPlayer and otherPlayer:FindFirstChild("HumanoidRootPart") then
-            local otherRootPart = otherPlayer.HumanoidRootPart
-            local distance = (rootPart.Position - otherRootPart.Position).Magnitude
+        if otherPlayer ~= Player.Character and otherPlayer and otherPlayer:FindFirstChild("HumanoidRootPart") then
+            local distance = (API.RootPart().Position - otherPlayer.HumanoidRootPart.Position).Magnitude
             if distance < shortestDistance then
                 closestPlayer = otherPlayer
                 shortestDistance = distance
