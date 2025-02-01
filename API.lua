@@ -132,6 +132,19 @@ API.PlayAnim = function(ID,timePos)
     end
 end
 
+API.AnimPlayed = function(AnimationIds,stop,callback)
+	local function main()
+		API.chr():WaitForChild("Humanoid").Animator.AnimationPlayed:Connect(function(track)
+        	for _, v in ipairs(AnimationIds) do
+            	if track.Animation.AnimationId == "rbxassetid://"..tostring(v) then
+            		if stop then track:Stop() else callback() end
+        		end
+        	end
+    	end)
+	end
+	main();API.OnSpawn(function()main()end)
+end
+
 API.Nearest = function()
     local nearest,distance = nil,math.huge
 	for _, other in pairs(workspace.Live:GetChildren()) do
