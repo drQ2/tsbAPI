@@ -21,7 +21,7 @@ API.RootPart = function()
 end
 
 API.Animator = function()
-	return API.Humanoid() and API.Humanoid().Animator
+	return API.Humanoid().Animator
 end
 
 API.Bind = function(k,c)
