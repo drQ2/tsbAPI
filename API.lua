@@ -146,15 +146,19 @@ API.AnimPlayed = function(AnimationIds,stop,callback)
 end
 
 API.Nearest = function()
-    local nearest,distance = nil,math.huge
-	for _, other in pairs(workspace.Live:GetChildren()) do
-		local target = other and other:FindFirstChild("HumanoidRootPart")
-		if other ~= API.chr() and target then
-			local dist = (API.RootPart().Position-target.Position).Magnitude
-			if dist<distance then nearest,distance = target,dist end
-		end
-	end
-	return nearest
+    local closestPlayer = nil
+    local shortestDistance = math.huge
+    for _, otherPlayer in pairs(workspace.Live:GetChildren()) do
+        if otherPlayer ~= player.Character and otherPlayer and otherPlayer:FindFirstChild("HumanoidRootPart") then
+            local otherRootPart = otherPlayer.HumanoidRootPart
+            local distance = (rootPart.Position - otherRootPart.Position).Magnitude
+            if distance < shortestDistance then
+                closestPlayer = otherPlayer
+                shortestDistance = distance
+            end
+        end
+    end
+    return closestPlayer
 end
 
 local VIP = false
