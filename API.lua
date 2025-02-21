@@ -5,19 +5,19 @@ local Player = Players.LocalPlayer
 local RunService = game:GetService("RunService")
 
 API.Camera = function()
-    return workspace.CurrentCamera
+	return workspace.CurrentCamera
 end
 
 API.chr = function()
-    return Player and Player.Character
+	return Player and Player.Character
 end
 
 API.Humanoid = function()
-    return API.chr() and API.chr():FindFirstChildWhichIsA("Humanoid")
+	return API.chr() and API.chr():FindFirstChildWhichIsA("Humanoid")
 end
 
 API.RootPart = function()
-    return API.chr() and API.chr():FindFirstChild("HumanoidRootPart")
+	return API.chr() and API.chr():FindFirstChild("HumanoidRootPart")
 end
 
 API.Animator = function()
@@ -25,139 +25,142 @@ API.Animator = function()
 end
 
 API.Bind = function(k,c)
-    game:GetService("UserInputService").InputBegan:Connect(function(i,g)
-        if not g and i.KeyCode == k then
-            c()
-        end
-    end)
+	game:GetService("UserInputService").InputBegan:Connect(function(i,g)
+		if not g and i.KeyCode == k then
+			c()
+		end
+	end)
 end
 
 API.TP = function(KEY, POS, DUNK)
-    API.Bind(KEY, function()
-        if API.RootPart() then
-            API.RootPart().CFrame = DUNK and API.RootPart().CFrame + Vector3.new(0, POS, 0) or CFrame.new(POS)
-        end
-    end)
+	API.Bind(KEY, function()
+		if API.RootPart() then
+			API.RootPart().CFrame = DUNK and API.RootPart().CFrame + Vector3.new(0, POS, 0) or CFrame.new(POS)
+		end
+	end)
 end
 
 API.loop = function(c)
-    coroutine.wrap(function()
-        RunService.RenderStepped:Connect(c)
-    end)()
+	coroutine.wrap(function()
+		RunService.RenderStepped:Connect(c)
+	end)()
 end
 
 API.OnSpawn = function(c)
-    Player.CharacterAdded:Connect(c)
+	Player.CharacterAdded:Connect(c)
 end
 
 API.flip = function(a, b, c)
-    local _, ry, _ = API.Camera().CFrame:ToOrientation()
-    if API.RootPart() then
-        API.RootPart().CFrame = CFrame.new(API.RootPart().CFrame.p) * CFrame.fromOrientation(0, ry, 0)
-        API.RootPart().CFrame *= CFrame.Angles(a, b, c)
-    end
+	local _, ry, _ = API.Camera().CFrame:ToOrientation()
+	if API.RootPart() then
+		API.RootPart().CFrame = CFrame.new(API.RootPart().CFrame.p) * CFrame.fromOrientation(0, ry, 0)
+		API.RootPart().CFrame *= CFrame.Angles(a, b, c)
+	end
 end
 
 API.trackedPlayers = {}
 
 function API.Detect(v, isAccessory, itemName, highlightColor, alertTitle, alertText)
-    local item = isAccessory and v:FindFirstChild(itemName) or v:GetAttribute(itemName)
-    local highlightName = itemName .. "Highlight"
+	local item = isAccessory and v:FindFirstChild(itemName) or v:GetAttribute(itemName)
+	local highlightName = itemName .. "Highlight"
 
-    if item and not API.trackedPlayers[v] then
-        local playerInstance = Players:GetPlayerFromCharacter(v)
-        if playerInstance then
-            game:GetService("StarterGui"):SetCore("SendNotification", {
-                Title = alertTitle,
-                Text = playerInstance.DisplayName .. alertText,
-                Icon = "rbxthumb://type=AvatarHeadShot&id=" .. playerInstance.UserId .. "&w=150&h=150",
-                Button1 = "Got it"
-            })
-        end
+	if item and not API.trackedPlayers[v] then
+		local playerInstance = Players:GetPlayerFromCharacter(v)
+		if playerInstance then
+			game:GetService("StarterGui"):SetCore("SendNotification", {
+				Title = alertTitle,
+				Text = playerInstance.DisplayName .. alertText,
+				Icon = "rbxthumb://type=AvatarHeadShot&id=" .. playerInstance.UserId .. "&w=150&h=150",
+				Button1 = "Got it"
+			})
+		end
 
-        local highlight = v:FindFirstChild(highlightName) or Instance.new("Highlight")
-        highlight.Name = highlightName
-        highlight.Adornee = v
-        highlight.FillColor = highlightColor
-        highlight.FillTransparency = 0.5
-        highlight.OutlineColor = Color3.new(1, 1, 1)
-        highlight.OutlineTransparency = 0
-        highlight.Parent = v
+		local highlight = v:FindFirstChild(highlightName) or Instance.new("Highlight")
+		highlight.Name = highlightName
+		highlight.Adornee = v
+		highlight.FillColor = highlightColor
+		highlight.FillTransparency = 0.5
+		highlight.OutlineColor = Color3.new(1, 1, 1)
+		highlight.OutlineTransparency = 0
+		highlight.Parent = v
 
-        API.trackedPlayers[v] = itemName
-    elseif not item and API.trackedPlayers[v] == itemName then
-        API.trackedPlayers[v] = nil
-        local highlight = v:FindFirstChild(highlightName)
-        if highlight then
-            highlight:Destroy()
-        end
-    end
+		API.trackedPlayers[v] = itemName
+	elseif not item and API.trackedPlayers[v] == itemName then
+		API.trackedPlayers[v] = nil
+		local highlight = v:FindFirstChild(highlightName)
+		if highlight then
+			highlight:Destroy()
+		end
+	end
 end
 
 API.setTransparency = function(isInvisible)
-    for _, part in pairs(API.chr():GetDescendants()) do
-        if part:IsA("BasePart") and part.Transparency ~= 1 then
-            part.Transparency = isInvisible and 0.5 or 0
-        end
-    end
+	for _, part in pairs(API.chr():GetDescendants()) do
+		if part:IsA("BasePart") and part.Transparency ~= 1 then
+			part.Transparency = isInvisible and 0.5 or 0
+		end
+	end
 end
 
 API.AnimPlayed = function(animationIds,stop,callback)
-    for i, id in ipairs(animationIds) do
-        animationIds[i] = "rbxassetid://"..tostring(id)
-    end
-    
-    Player.CharacterAdded:Connect(function()
-        API.Humanoid():FindFirstChildOfClass("Animator").AnimationPlayed:Connect(function(animationTrack)
-            if table.find(animationIds, animationTrack.Animation.AnimationId) then
-                if stop then animationTrack:Stop() else callback() end
-            end
-        end)
-    end)
+	for i, id in ipairs(animationIds) do
+		animationIds[i] = "rbxassetid://"..tostring(id)
+	end
+
+	Player.CharacterAdded:Connect(function()
+		API.Humanoid():FindFirstChildOfClass("Animator").AnimationPlayed:Connect(function(animationTrack)
+			if table.find(animationIds, animationTrack.Animation.AnimationId) then
+				if stop then animationTrack:Stop() else callback() end
+			end
+		end)
+	end)
 end
 
 API.PlayAnim = function(ID,timePos)
-    local anim = Instance.new("Animation")
-    anim.AnimationId = "rbxassetid://"..tostring(ID)
-    local loadedAnim = API.Humanoid().Animator:LoadAnimation(anim)
-    if timePos then
-        loadedAnim.Priority = Enum.AnimationPriority.Action4
-        loadedAnim:Play()
-        loadedAnim.TimePosition = timePos
-        loadedAnim:AdjustSpeed(0)
-        RunService.RenderStepped:Wait()
-        loadedAnim:Stop()
-    else
-        loadedAnim:Play()
-    end
+	local anim = Instance.new("Animation")
+	anim.AnimationId = "rbxassetid://"..tostring(ID)
+	local loadedAnim = API.Humanoid().Animator:LoadAnimation(anim)
+	if timePos then
+		loadedAnim.Priority = Enum.AnimationPriority.Action4
+		loadedAnim:Play()
+		loadedAnim.TimePosition = timePos
+		loadedAnim:AdjustSpeed(0)
+		RunService.RenderStepped:Wait()
+		loadedAnim:Stop()
+	else
+		loadedAnim:Play()
+	end
 end
 
 API.AnimPlayed = function(AnimationIds,stop,callback)
 	local function main()
 		API.chr():WaitForChild("Humanoid").Animator.AnimationPlayed:Connect(function(track)
-        	for _, v in ipairs(AnimationIds) do
-            	if track.Animation.AnimationId == "rbxassetid://"..tostring(v) then
-            		if stop then track:Stop() else callback() end
-        		end
-        	end
-    	end)
+			for _, v in ipairs(AnimationIds) do
+				if track.Animation.AnimationId == "rbxassetid://"..tostring(v) then
+					if stop then
+						track:Stop()
+
+					end
+				end
+			end
+		end)
 	end
 	main();API.OnSpawn(function()main()end)
 end
 
 API.Nearest = function()
-    local closestPlayer = nil
-    local shortestDistance = math.huge
-    for _, otherPlayer in pairs(workspace.Live:GetChildren()) do
-        if otherPlayer ~= Player.Character and otherPlayer and otherPlayer:FindFirstChild("HumanoidRootPart") then
-            local distance = (API.RootPart().Position - otherPlayer.HumanoidRootPart.Position).Magnitude
-            if distance < shortestDistance then
-                closestPlayer = otherPlayer
-                shortestDistance = distance
-            end
-        end
-    end
-    return closestPlayer
+	local closestPlayer = nil
+	local shortestDistance = math.huge
+	for _, otherPlayer in pairs(workspace.Live:GetChildren()) do
+		if otherPlayer ~= Player.Character and otherPlayer and otherPlayer:FindFirstChild("HumanoidRootPart") then
+			local distance = (API.RootPart().Position - otherPlayer.HumanoidRootPart.Position).Magnitude
+			if distance < shortestDistance then
+				closestPlayer = otherPlayer
+				shortestDistance = distance
+			end
+		end
+	end
+	return closestPlayer
 end
 
 local VIP = false
