@@ -1,5 +1,3 @@
--- Skidded
-
 local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
@@ -12,7 +10,7 @@ RunService:Set3dRenderingEnabled(false) -- Disable 3D rendering
 
 RunService.RenderStepped:Connect(function()
 	game:GetService("GuiService").ErrorMessageChanged:Connect(function()
-		TeleportService:TeleportToPlaceInstance(PlaceId, JobId, player)
+		game:GetService("TeleportService"):TeleportToPlaceInstance(PlaceId, JobId, player)
 	end)
     if player.Character then
         local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
