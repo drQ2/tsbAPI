@@ -3,6 +3,21 @@ local Players = game:GetService("Players")
 local player = Players.LocalPlayer
 local teleportPosition = Vector3.new(1061, 406, 23005)
 
+task.spawn(function()
+	local BeenASecond, V3 = false, Vector3.new(0, 0, 0)
+	delay(1, function()
+		BeenASecond = true
+	end)
+	while not BeenASecond do
+		for _, v in ipairs(player.Character:GetDescendants()) do
+			if v:IsA("BasePart") then
+				v.Velocity, v.RotVelocity = V3, V3
+			end
+		end
+		wait()
+	end
+end)
+
 PlaceId, JobId = game.PlaceId, game.JobId
 queueteleport = (syn and syn.queue_on_teleport) or queue_on_teleport or (fluxus and fluxus.queue_on_teleport)
 
