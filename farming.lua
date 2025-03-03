@@ -3,7 +3,7 @@ local Players = game:GetService("Players")
 local player = Players.LocalPlayer
 local teleportPosition = Vector3.new(1061, 406, 23005)
 
-task.spawn(function()
+task.spawn(function() -- break velocity (ripped from IY)
 	local BeenASecond, V3 = false, Vector3.new(0, 0, 0)
 	delay(1, function()
 		BeenASecond = true
@@ -18,8 +18,8 @@ task.spawn(function()
 	end
 end)
 
-PlaceId, JobId = game.PlaceId, game.JobId
-queueteleport = (syn and syn.queue_on_teleport) or queue_on_teleport or (fluxus and fluxus.queue_on_teleport)
+local bb=game:service'VirtualUser'
+player.Idled:connect(function()bb:CaptureController()bb:ClickButton2(Vector2.new())end) -- anti idle (?)
 
 RunService:Set3dRenderingEnabled(false) -- Disable 3D rendering
 
@@ -41,10 +41,3 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
-local TeleportCheck = false
-Players.LocalPlayer.OnTeleport:Connect(function(State)
-	if not TeleportCheck and queueteleport then
-		TeleportCheck = true
-		queueteleport("loadstring(game:HttpGet('https://raw.githubusercontent.com/drQ2/tsbAPI/refs/heads/main/farming.lua'))()")
-	end
-end)
