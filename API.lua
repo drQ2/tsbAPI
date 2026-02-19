@@ -174,8 +174,9 @@ API.AnimPlayed = function(AnimationIds,stop,callback)
 		if not animator then return end
 
 		API.add(animator.AnimationPlayed:Connect(function(animationTrack)
+			local trackId = string.match(animationTrack.Animation.AnimationId, "%d+")
 			for _, v in ipairs(AnimationIds) do
-				if animationTrack.Animation.AnimationId == "rbxassetid://"..tostring(v) then
+				if trackId == tostring(v) then
 					if stop then animationTrack:Stop()
 					elseif callback then callback()
 					end
@@ -185,8 +186,9 @@ API.AnimPlayed = function(AnimationIds,stop,callback)
 		
 		-- Check already playing tracks
 		for _, track in ipairs(animator:GetPlayingAnimationTracks()) do
+			local trackId = string.match(track.Animation.AnimationId, "%d+")
 			for _, v in ipairs(AnimationIds) do
-				if track.Animation.AnimationId == "rbxassetid://"..tostring(v) then
+				if trackId == tostring(v) then
 					if stop then track:Stop()
 					elseif callback then callback()
 					end
