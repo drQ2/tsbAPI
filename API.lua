@@ -119,6 +119,7 @@ end
 
 local cachedParts = {}
 local lastChar = nil
+local lastTransState = nil
 
 API.setTransparency = function(isInvisible)
 	local char = API.chr()
@@ -127,23 +128,27 @@ API.setTransparency = function(isInvisible)
 	if char ~= lastChar then
 		cachedParts = {}
 		lastChar = char
+		lastTransState = nil
 		for _, part in ipairs(char:GetDescendants()) do
 			if part:IsA("BasePart") and part.Transparency ~= 1 then
-				table.insert(cachedParts, part)
+				table.insert(cachedParts, {p = part, o = part.Transparency})
 			end
 		end
 		-- Listen for new parts (optional, but good for tools/accessories)
 		char.DescendantAdded:Connect(function(part)
 			if part:IsA("BasePart") and part.Transparency ~= 1 then
-				table.insert(cachedParts, part)
+				table.insert(cachedParts, {p = part, o = part.Transparency})
 			end
 		end)
 	end
 
-	local targetTrans = isInvisible and 0.5 or 0
-	for _, part in ipairs(cachedParts) do
-		if part and part.Parent then -- check validity
-			part.Transparency = targetTrans
+	-- Only apply changes if the state toggled
+	if lastTransState == isInvisible then return end
+	lastTransState = isInvisible
+
+	for _, data in ipairs(cachedParts) do
+		if data.p and data.p.Parent then -- check validity
+			data.p.Transparency = isInvisible and 0.5 or data.o
 		end
 	end
 end
