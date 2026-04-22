@@ -21,7 +21,7 @@ end)
 local bb=game:service'VirtualUser'
 player.Idled:connect(function()bb:CaptureController()bb:ClickButton2(Vector2.new())end) -- anti idle (?)
 
-RunService:Set3dRenderingEnabled(false) -- Disable 3D rendering
+RunService:Set3dRenderingEnabled(true) -- SET TO FALSE IF YOU WANT TO DISABLE RENDERING TO SAVE CPU POWER.
 
 RunService.RenderStepped:Connect(function()
 	game:GetService("GuiService").ErrorMessageChanged:Connect(function()
@@ -36,8 +36,8 @@ RunService.RenderStepped:Connect(function()
         end
 
         if humanoid and humanoid.Health < 100 then
+            task.wait(.1)
             humanoid:ChangeState(Enum.HumanoidStateType.Dead)
         end
     end
 end)
-
