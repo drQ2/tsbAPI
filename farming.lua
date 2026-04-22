@@ -26,6 +26,7 @@ RunService:Set3dRenderingEnabled(true) -- SET TO FALSE IF YOU WANT TO DISABLE RE
 RunService.RenderStepped:Connect(function()
 	game:GetService("GuiService").ErrorMessageChanged:Connect(function()
 		game:GetService("TeleportService"):TeleportToPlaceInstance(PlaceId, JobId, player)
+		-- add loadstring here for auto re-execute after rejoining
 	end)
     if player.Character then
         local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
