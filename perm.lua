@@ -1,5 +1,5 @@
 local a = {}
 
 function a.CanIuse()
-  return false
+  return true
 end
