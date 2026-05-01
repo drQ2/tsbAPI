@@ -239,4 +239,46 @@ API.DashCD = function(state)
 	workspace:SetAttribute("NoDashCooldown",state)
 end
 
+-- Resolve a player by username or display name (exact match first, then partial)
+API.resolvePlayer = function(nameQuery)
+	nameQuery = string.lower(nameQuery)
+	for _, p in ipairs(Players:GetPlayers()) do
+		if p ~= Player then
+			if string.lower(p.Name) == nameQuery or string.lower(p.DisplayName) == nameQuery then
+				return p
+			end
+		end
+	end
+	for _, p in ipairs(Players:GetPlayers()) do
+		if p ~= Player then
+			if string.find(string.lower(p.Name), nameQuery, 1, true) or string.find(string.lower(p.DisplayName), nameQuery, 1, true) then
+				return p
+			end
+		end
+	end
+	return nil
+end
+
+-- Check if a player is alive (has character, humanoid, health > 0)
+API.isPlayerAlive = function(player)
+	if not player or not player.Parent then return false end
+	local char = player.Character
+	if not char then return false end
+	local hum = char:FindFirstChildOfClass("Humanoid")
+	if not hum or hum.Health <= 0 then return false end
+	return true
+end
+
+-- Send a chat message using the correct chat system
+API.chatMessage = function(text)
+	pcall(function()
+		local TCS = game:GetService("TextChatService")
+		if TCS.ChatVersion == Enum.ChatVersion.TextChatService then
+			TCS.TextChannels.RBXGeneral:SendAsync(text)
+		else
+			game:GetService("ReplicatedStorage").DefaultChatSystemChatEvents.SayMessageRequest:FireServer(text, "All")
+		end
+	end)
+end
+
 return API
