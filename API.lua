@@ -43,6 +43,14 @@ API.RootPart = function()
 	return API.chr() and API.chr():FindFirstChild("HumanoidRootPart")
 end
 
+API.GetHumanoid = function(c)
+	return c and c:FindFirstChildWhichIsA("Humanoid")
+end
+
+API.GetRoot = function(c)
+	return c and c:FindFirstChild("HumanoidRootPart")
+end
+
 API.Animator = function()
 	return API.Humanoid().Animator
 end
@@ -87,27 +95,35 @@ function API.Detect(v, isAccessory, itemName, highlightColor, alertTitle, alertT
 	local item = isAccessory and v:FindFirstChild(itemName) or v:GetAttribute(itemName)
 	local highlightName = itemName .. "Highlight"
 
-	if item and not API.trackedPlayers[v] then
-		local playerInstance = Players:GetPlayerFromCharacter(v)
-		if playerInstance then
-			StarterGui:SetCore("SendNotification", {
-				Title = alertTitle,
-				Text = playerInstance.DisplayName .. alertText,
-				Icon = "rbxthumb://type=AvatarHeadShot&id=" .. playerInstance.UserId .. "&w=150&h=150",
-				Button1 = "Got it"
-			})
+	if item then
+		if API.trackedPlayers[v] and API.trackedPlayers[v] ~= itemName then
+			local oldHighlight = v:FindFirstChild(API.trackedPlayers[v] .. "Highlight")
+			if oldHighlight then oldHighlight:Destroy() end
+			API.trackedPlayers[v] = nil
 		end
+		
+		if not API.trackedPlayers[v] then
+			local playerInstance = Players:GetPlayerFromCharacter(v)
+			if playerInstance then
+				StarterGui:SetCore("SendNotification", {
+					Title = alertTitle,
+					Text = playerInstance.DisplayName .. alertText,
+					Icon = "rbxthumb://type=AvatarHeadShot&id=" .. playerInstance.UserId .. "&w=150&h=150",
+					Button1 = "Got it"
+				})
+			end
 
-		local highlight = v:FindFirstChild(highlightName) or Instance.new("Highlight")
-		highlight.Name = highlightName
-		highlight.Adornee = v
-		highlight.FillColor = highlightColor
-		highlight.FillTransparency = 0.5
-		highlight.OutlineColor = Color3.new(1, 1, 1)
-		highlight.OutlineTransparency = 0
-		highlight.Parent = v
+			local highlight = v:FindFirstChild(highlightName) or Instance.new("Highlight")
+			highlight.Name = highlightName
+			highlight.Adornee = v
+			highlight.FillColor = highlightColor
+			highlight.FillTransparency = 0.5
+			highlight.OutlineColor = Color3.new(1, 1, 1)
+			highlight.OutlineTransparency = 0
+			highlight.Parent = v
 
-		API.trackedPlayers[v] = itemName
+			API.trackedPlayers[v] = itemName
+		end
 	elseif not item and API.trackedPlayers[v] == itemName then
 		API.trackedPlayers[v] = nil
 		local highlight = v:FindFirstChild(highlightName)
@@ -171,6 +187,13 @@ API.PlayAnim = function(ID,timePos)
 	end
 end
 
+API.LoadAnim = function(ID)
+	local anim = Instance.new("Animation")
+	anim.AnimationId = "rbxassetid://"..tostring(ID)
+	local hum = API.Humanoid()
+	return hum and hum.Animator and hum.Animator:LoadAnimation(anim)
+end
+
 API.AnimPlayed = function(AnimationIds,stop,callback)
 	local function hookAnimator(char)
 		local hum = char:WaitForChild("Humanoid", 5)
@@ -183,7 +206,7 @@ API.AnimPlayed = function(AnimationIds,stop,callback)
 			for _, v in ipairs(AnimationIds) do
 				if trackId == tostring(v) then
 					if stop then animationTrack:Stop()
-					elseif callback then callback()
+					elseif callback then callback(animationTrack)
 					end
 				end
 			end
@@ -195,7 +218,7 @@ API.AnimPlayed = function(AnimationIds,stop,callback)
 			for _, v in ipairs(AnimationIds) do
 				if trackId == tostring(v) then
 					if stop then track:Stop()
-					elseif callback then callback()
+					elseif callback then callback(track)
 					end
 				end
 			end
