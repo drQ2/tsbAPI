@@ -265,6 +265,7 @@ end
 -- Resolve a player by username or display name (exact match first, then partial)
 API.resolvePlayer = function(nameQuery)
 	nameQuery = string.lower(nameQuery)
+	if nameQuery == "me" then return Player end
 	for _, p in ipairs(Players:GetPlayers()) do
 		if p ~= Player then
 			if string.lower(p.Name) == nameQuery or string.lower(p.DisplayName) == nameQuery then
@@ -302,6 +303,280 @@ API.chatMessage = function(text)
 			game:GetService("ReplicatedStorage").DefaultChatSystemChatEvents.SayMessageRequest:FireServer(text, "All")
 		end
 	end)
+end
+
+----------------------------------------------------------------
+-- Glue / Desync System (merged from Misc.lua)
+----------------------------------------------------------------
+
+local cfNew = CFrame.new
+local cfFromOrientation = CFrame.fromOrientation
+local v3New = Vector3.new
+local CF_IDENTITY = cfNew()
+
+if not getgenv().MiscGlueState then
+	getgenv().MiscGlueState = {
+		glueConnection      = nil,
+		glueCamConnection   = nil,
+		glueInputConnection = nil,
+		glueShiftLock       = false,
+		glueClone           = nil,
+		glueActive          = false,
+		lastClientCFrame    = nil,
+	}
+end
+local state = getgenv().MiscGlueState
+
+if not getgenv().MW_Camera then
+	getgenv().MW_Camera = { CameraSubject = nil }
+end
+local MW_Camera = getgenv().MW_Camera
+
+if not getgenv().MW_CameraHooked then
+	getgenv().MW_CameraHooked = true
+	local IsA = game.IsA
+
+	local __index
+	__index = hookmetamethod(game, "__index", newcclosure(function(self, key)
+		if not checkcaller() and MW_Camera.CameraSubject then
+			if typeof(self) == "Instance" and IsA(self, "Camera") then
+				if key == "CameraSubject" or key == "cameraSubject" then
+					return MW_Camera.CameraSubject
+				end
+			end
+		end
+		return __index(self, key)
+	end))
+
+	local __newindex
+	__newindex = hookmetamethod(game, "__newindex", newcclosure(function(self, key, value)
+		if not checkcaller() and MW_Camera.CameraSubject then
+			if typeof(self) == "Instance" and IsA(self, "Camera") then
+				if key == "CameraSubject" or key == "cameraSubject" then
+					return
+				end
+			end
+		end
+		return __newindex(self, key, value)
+	end))
+end
+
+local function DisconnectState(key)
+	local conn = state[key]
+	if conn then
+		conn:Disconnect()
+		state[key] = nil
+	end
+end
+
+local function CreateGlueClone()
+	local char = API.chr()
+	if not char then return nil end
+
+	local clone = char:Clone()
+	clone.Name = "GlueClone"
+
+	local cloneParts = {}
+
+	for _, desc in ipairs(clone:GetDescendants()) do
+		if desc:IsA("BaseScript") then
+			desc:Destroy()
+		elseif desc:IsA("BasePart") then
+			desc.Transparency = 1
+			desc.CanCollide = false
+			desc.Anchored = false
+			cloneParts[#cloneParts + 1] = desc
+		elseif desc:IsA("Decal") or desc:IsA("Texture") then
+			desc.Transparency = 1
+		end
+	end
+
+	local hum = clone:FindFirstChildOfClass("Humanoid")
+	if hum then
+		hum.NameDisplayDistance = 0
+		hum.HealthDisplayDistance = 0
+	end
+
+	clone.Parent = workspace
+
+	local conn
+	conn = RunService.Stepped:Connect(function()
+		if not clone or not clone.Parent then
+			conn:Disconnect()
+			return
+		end
+		for i = 1, #cloneParts do
+			local p = cloneParts[i]
+			if p and p.Parent then
+				p.CanCollide = false
+			end
+		end
+	end)
+
+	state._glueCollisionConn = conn
+	return clone
+end
+
+local function DestroyGlueClone()
+	if state._glueCollisionConn then
+		state._glueCollisionConn:Disconnect()
+		state._glueCollisionConn = nil
+	end
+	local c = state.glueClone
+	if c then
+		if c.Parent then c:Destroy() end
+		state.glueClone = nil
+	end
+end
+
+function API.Glue(Root, Offset, Toggle, UseDesync)
+	state.glueActive = false
+
+	DisconnectState("glueConnection")
+	DisconnectState("glueCamConnection")
+	DisconnectState("glueInputConnection")
+	state.glueShiftLock = false
+
+	if state.lastClientCFrame then
+		local c = API.chr()
+		if c and c.PrimaryPart then
+			c.PrimaryPart.CFrame = state.lastClientCFrame
+		end
+		state.lastClientCFrame = nil
+	end
+
+	DestroyGlueClone()
+
+	MW_Camera.CameraSubject = nil
+	local hum = API.Humanoid()
+	if hum then
+		workspace.CurrentCamera.CameraSubject = hum
+	end
+
+	if not Toggle then return end
+
+	local offsetCF
+	local offsetFunc
+	local offsetType
+
+	if type(Offset) == "function" then
+		offsetFunc = Offset
+		offsetType = "function"
+	elseif typeof(Offset) == "CFrame" then
+		offsetCF = Offset
+		offsetType = "cframe"
+	elseif typeof(Offset) == "Vector3" then
+		offsetCF = cfNew(Offset)
+		offsetType = "cframe"
+	elseif type(Offset) == "table" then
+		offsetCF = cfNew(Offset[1] or 0, Offset[2] or 0, Offset[3] or 0)
+		offsetType = "cframe"
+	else
+		offsetCF = CF_IDENTITY
+		offsetType = "cframe"
+	end
+
+	state.glueActive = true
+
+	local function checkAlive()
+		local c = API.chr()
+		if not c then return false end
+		local pr = c.PrimaryPart
+		local h = c:FindFirstChildOfClass("Humanoid")
+		if not pr or not h or h.Health <= 0 or pr.Position.Y < workspace.FallenPartsDestroyHeight then
+			return false
+		end
+
+		if not Root or not Root.Parent then return false end
+		local rootPos = Root:IsA("Model") and Root:GetPivot().Position or Root.Position
+		if rootPos.Y < workspace.FallenPartsDestroyHeight then
+			return false
+		end
+		local tHum = Root.Parent:FindFirstChildOfClass("Humanoid")
+		if tHum and tHum.Health <= 0 then return false end
+
+		return true, pr
+	end
+
+	if not UseDesync then
+		state.glueConnection = RunService.Heartbeat:Connect(function()
+			if not state.glueActive then return end
+			local ok, pr = checkAlive()
+			if not ok then API.StopGlue() return end
+
+			sethiddenproperty(pr, "PhysicsRepRootPart", Root)
+
+			if offsetType == "function" then
+				local result = offsetFunc()
+				if typeof(result) == "CFrame" then
+					pr.CFrame = result
+				else
+					local ox, oy, oz = offsetFunc()
+					pr.CFrame = (Root:IsA("Model") and Root:GetPivot() or Root.CFrame) * cfNew(ox, oy, oz)
+				end
+			else
+				pr.CFrame = (Root:IsA("Model") and Root:GetPivot() or Root.CFrame) * offsetCF
+			end
+		end)
+		return
+	end
+
+	state.glueClone = CreateGlueClone()
+	if not state.glueClone then return end
+
+	local cloneHum = state.glueClone:FindFirstChildOfClass("Humanoid")
+	workspace.Camera.CameraSubject = cloneHum
+	MW_Camera.CameraSubject = cloneHum
+
+	state.glueInputConnection = UserInputService:GetPropertyChangedSignal("MouseBehavior"):Connect(function()
+		state.glueShiftLock = UserInputService.MouseBehavior == Enum.MouseBehavior.LockCenter
+	end)
+
+	state.glueCamConnection = RunService.RenderStepped:Connect(function()
+		if not state.glueActive then return end
+		local ok, pr = checkAlive()
+		if not ok then API.StopGlue() return end
+
+		if state.lastClientCFrame then
+			pr.CFrame = state.lastClientCFrame
+		end
+
+		if state.glueShiftLock then
+			local _, ry = workspace.CurrentCamera.CFrame:ToOrientation()
+			pr.CFrame = cfNew(pr.Position) * cfFromOrientation(0, ry, 0)
+		end
+	end)
+
+	state.glueConnection = RunService.Heartbeat:Connect(function()
+		if not state.glueActive then return end
+		local ok, pr = checkAlive()
+		if not ok then API.StopGlue() return end
+
+		state.lastClientCFrame = pr.CFrame
+
+		sethiddenproperty(pr, "PhysicsRepRootPart", Root)
+
+		if offsetType == "function" then
+			local result = offsetFunc()
+			if typeof(result) == "CFrame" then
+				pr.CFrame = result
+			else
+				local ox, oy, oz = offsetFunc()
+				pr.CFrame = (Root:IsA("Model") and Root:GetPivot() or Root.CFrame) * cfNew(ox, oy, oz)
+			end
+		else
+			pr.CFrame = (Root:IsA("Model") and Root:GetPivot() or Root.CFrame) * offsetCF
+		end
+
+		local gc = state.glueClone
+		if gc and gc.PrimaryPart then
+			gc.PrimaryPart.CFrame = state.lastClientCFrame
+		end
+	end)
+end
+
+function API.StopGlue()
+	API.Glue(nil, nil, false)
 end
 
 return API
