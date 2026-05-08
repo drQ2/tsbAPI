@@ -20,6 +20,25 @@ function API.Cleanup()
 	table.clear(getgenv().TSB_Connections)
 end
 
+function API.InitState(name, defaultData, customCleanup)
+	local globalName = "TSB_" .. name
+	local oldState = getgenv()[globalName]
+	
+	if oldState then
+		if oldState.connection then pcall(function() oldState.connection:Disconnect() end) end
+		if oldState.glueLoopConnection then pcall(function() oldState.glueLoopConnection:Disconnect() end) end
+		if oldState.animTrack then pcall(function() oldState.animTrack:Stop() end) end
+		if oldState.monitorConnections then
+			for _, conn in pairs(oldState.monitorConnections) do
+				if conn then pcall(function() conn:Disconnect() end) end
+			end
+		end
+		if customCleanup then pcall(customCleanup) end
+	end
+	
+	getgenv()[globalName] = defaultData
+end
+
 function API.add(conn)
 	if conn then
 		table.insert(getgenv().TSB_Connections, conn)
@@ -577,6 +596,105 @@ end
 
 function API.StopGlue()
 	API.Glue(nil, nil, false)
+end
+
+
+
+-- ==================== GLYPHS AND SHAPES ====================
+API.Glyphs = {
+    Letters = {},
+    Shapes = {}
+}
+
+do
+    local s = function(...) return {...} end
+    local p = function(x,y) return {x,y} end
+    local L = API.Glyphs.Letters
+    local S = API.Glyphs.Shapes
+
+    L["A"] = {s(p(0,6),p(0,1),p(1,0),p(3,0),p(4,1),p(4,6)), s(p(0,3),p(4,3))}
+    L["B"] = {s(p(0,6),p(0,0),p(3,0),p(4,1),p(3,3),p(0,3),p(3,3),p(4,4),p(4,5),p(3,6),p(0,6))}
+    L["C"] = {s(p(4,1),p(3,0),p(1,0),p(0,1),p(0,5),p(1,6),p(3,6),p(4,5))}
+    L["D"] = {s(p(0,0),p(0,6),p(3,6),p(4,5),p(4,1),p(3,0),p(0,0))}
+    L["E"] = {s(p(4,0),p(0,0),p(0,6),p(4,6)), s(p(0,3),p(3,3))}
+    L["F"] = {s(p(4,0),p(0,0),p(0,6)), s(p(0,3),p(3,3))}
+    L["G"] = {s(p(4,1),p(3,0),p(1,0),p(0,1),p(0,5),p(1,6),p(3,6),p(4,5),p(4,3),p(2,3))}
+    L["H"] = {s(p(0,0),p(0,6)), s(p(4,0),p(4,6)), s(p(0,3),p(4,3))}
+    L["I"] = {s(p(1,0),p(3,0)), s(p(2,0),p(2,6)), s(p(1,6),p(3,6))}
+    L["J"] = {s(p(1,0),p(4,0)), s(p(3,0),p(3,5),p(2,6),p(1,6),p(0,5))}
+    L["K"] = {s(p(0,0),p(0,6)), s(p(4,0),p(0,3),p(4,6))}
+    L["L"] = {s(p(0,0),p(0,6),p(4,6))}
+    L["M"] = {s(p(0,6),p(0,0),p(2,3),p(4,0),p(4,6))}
+    L["N"] = {s(p(0,6),p(0,0),p(4,6),p(4,0))}
+    L["O"] = {s(p(1,0),p(3,0),p(4,1),p(4,5),p(3,6),p(1,6),p(0,5),p(0,1),p(1,0))}
+    L["P"] = {s(p(0,6),p(0,0),p(3,0),p(4,1),p(4,2),p(3,3),p(0,3))}
+    L["Q"] = {s(p(1,0),p(3,0),p(4,1),p(4,5),p(3,6),p(1,6),p(0,5),p(0,1),p(1,0)), s(p(3,5),p(4,6))}
+    L["R"] = {s(p(0,6),p(0,0),p(3,0),p(4,1),p(4,2),p(3,3),p(0,3)), s(p(2,3),p(4,6))}
+    L["S"] = {s(p(4,1),p(3,0),p(1,0),p(0,1),p(0,2),p(1,3),p(3,3),p(4,4),p(4,5),p(3,6),p(1,6),p(0,5))}
+    L["T"] = {s(p(0,0),p(4,0)), s(p(2,0),p(2,6))}
+    L["U"] = {s(p(0,0),p(0,5),p(1,6),p(3,6),p(4,5),p(4,0))}
+    L["V"] = {s(p(0,0),p(2,6),p(4,0))}
+    L["W"] = {s(p(0,0),p(1,6),p(2,3),p(3,6),p(4,0))}
+    L["X"] = {s(p(0,0),p(4,6)), s(p(4,0),p(0,6))}
+    L["Y"] = {s(p(0,0),p(2,3),p(4,0)), s(p(2,3),p(2,6))}
+    L["Z"] = {s(p(0,0),p(4,0),p(0,6),p(4,6))}
+    L["0"] = {s(p(1,0),p(3,0),p(4,1),p(4,5),p(3,6),p(1,6),p(0,5),p(0,1),p(1,0)), s(p(0,5),p(4,1))}
+    L["1"] = {s(p(1,1),p(2,0),p(2,6)), s(p(1,6),p(3,6))}
+    L["2"] = {s(p(0,1),p(1,0),p(3,0),p(4,1),p(4,2),p(0,6),p(4,6))}
+    L["3"] = {s(p(0,1),p(1,0),p(3,0),p(4,1),p(4,2),p(3,3),p(2,3),p(3,3),p(4,4),p(4,5),p(3,6),p(1,6),p(0,5))}
+    L["4"] = {s(p(0,0),p(0,3),p(4,3)), s(p(3,0),p(3,6))}
+    L["5"] = {s(p(4,0),p(0,0),p(0,3),p(3,3),p(4,4),p(4,5),p(3,6),p(1,6),p(0,5))}
+    L["6"] = {s(p(3,0),p(1,0),p(0,1),p(0,5),p(1,6),p(3,6),p(4,5),p(4,4),p(3,3),p(0,3))}
+    L["7"] = {s(p(0,0),p(4,0),p(2,6))}
+    L["8"] = {s(p(1,3),p(0,2),p(0,1),p(1,0),p(3,0),p(4,1),p(4,2),p(3,3),p(1,3),p(0,4),p(0,5),p(1,6),p(3,6),p(4,5),p(4,4),p(3,3))}
+    L["9"] = {s(p(4,3),p(1,3),p(0,2),p(0,1),p(1,0),p(3,0),p(4,1),p(4,5),p(3,6),p(1,6))}
+    L["!"] = {s(p(2,0),p(2,4)), s(p(2,6),p(2,6))}
+    L["?"] = {s(p(0,1),p(1,0),p(3,0),p(4,1),p(4,2),p(2,3),p(2,4)), s(p(2,6),p(2,6))}
+    L["."] = {s(p(2,6),p(2,6))}
+    L[","] = {s(p(2,6),p(1,7))}
+    L["-"] = {s(p(1,3),p(3,3))}
+    L["'"] = {s(p(2,0),p(2,1))}
+    L[":"] = {s(p(2,2),p(2,2)), s(p(2,5),p(2,5))}
+    L["/"] = {s(p(4,0),p(0,6))}
+    L["("] = {s(p(3,0),p(2,1),p(2,5),p(3,6))}
+    L[")"] = {s(p(1,0),p(2,1),p(2,5),p(1,6))}
+    L[" "] = {}
+    L["<3"] = {s(p(0,2),p(0,1),p(1,0),p(2,1),p(3,0),p(4,1),p(4,2),p(2,5),p(0,2))}
+
+    S["STAR"] = {s(p(3,0), p(3.68,2.07), p(5.85,2.07), p(4.09,3.36), p(4.76,5.43), p(3,4.15), p(1.24,5.43), p(1.91,3.36), p(0.15,2.07), p(2.32,2.07), p(3,0))}
+    S["HEART"] = {s(p(3,2), p(2.5,1), p(1.5,0.3), p(0.5,0.5), p(0,1.5), p(0,2.5), p(0.5,3.5), p(1.5,4.5), p(3,5.5), p(4.5,4.5), p(5.5,3.5), p(6,2.5), p(6,1.5), p(5.5,0.5), p(4.5,0.3), p(3.5,1), p(3,2))}
+    
+    local circleStroke = {}
+    for i = 0, 24 do local angle = (i / 24) * math.pi * 2 - math.pi / 2; circleStroke[#circleStroke + 1] = p(3 + 3 * math.cos(angle), 3 + 3 * math.sin(angle)) end
+    S["CIRCLE"] = {circleStroke}
+    
+    S["TRIANGLE"] = {s(p(3,0), p(6,5.5), p(0,5.5), p(3,0))}
+    S["DIAMOND"] = {s(p(3,0), p(6,3), p(3,6), p(0,3), p(3,0))}
+    
+    local pentStroke = {}
+    for i = 0, 5 do local angle = (i / 5) * math.pi * 2 - math.pi / 2; pentStroke[#pentStroke + 1] = p(3 + 3 * math.cos(angle), 3 + 3 * math.sin(angle)) end
+    S["PENTAGON"] = {pentStroke}
+    
+    S["PENTAGRAM"] = {s(p(3,0), p(4.76,5.43), p(0.15,2.07), p(5.85,2.07), p(1.24,5.43), p(3,0))}
+    S["PENTACLE"] = {s(p(3,0), p(4.76,5.43), p(0.15,2.07), p(5.85,2.07), p(1.24,5.43), p(3,0)), circleStroke}
+    
+    local hexStroke = {}
+    for i = 0, 6 do local angle = (i / 6) * math.pi * 2 - math.pi / 2; hexStroke[#hexStroke + 1] = p(3 + 3 * math.cos(angle), 3 + 3 * math.sin(angle)) end
+    S["HEXAGON"] = {hexStroke}
+    
+    local spiralStroke = {}
+    for i = 0, 100 do local t = (i / 100) * math.pi * 6; local radius = 3 * (i / 100); spiralStroke[#spiralStroke + 1] = p(3 + radius * math.cos(t), 3 + radius * math.sin(t)) end
+    S["SPIRAL"] = {spiralStroke}
+    
+    S["LIGHTNING"] = {s(p(3.5,0), p(1.5,2.5), p(3,2.5), p(1,5), p(2.5,5), p(0.5,6.5), p(4.5,3.5), p(3,3.5), p(5,1.5), p(3.5,1.5), p(5.5,0), p(3.5,0))}
+    
+    local infStroke = {}
+    for i = 0, 32 do local t = (i / 32) * math.pi * 2; local denom = 1 + math.sin(t)^2; infStroke[#infStroke + 1] = p(3 + 2.8 * math.cos(t) / denom, 3 + 2.8 * math.sin(t) * math.cos(t) / denom) end
+    S["INFINITY"] = {infStroke}
+    
+    S["X"] = {s(p(0,0), p(6,6)), s(p(6,0), p(0,6))}
+    S["CHECK"] = {s(p(0,3.5), p(2,5.5), p(6,0.5))}
+    S["PP"] = {s(p(1.8,3), p(1.8,-0.5), p(2,-1), p(2.5,-1.2), p(3,-1.3), p(3.5,-1.2), p(4,-1), p(4.2,-0.5), p(4.2,3)), s(p(1.8,3), p(1.5,3.5), p(0.8,4), p(0.5,4.5), p(0.5,5), p(0.8,5.5), p(1.5,5.8), p(2.2,5.5), p(2.5,5), p(2.5,4.5), p(2.3,4), p(2.2,3.5)), s(p(4.2,3), p(3.8,3.5), p(3.7,4), p(3.5,4.5), p(3.5,5), p(3.8,5.5), p(4.5,5.8), p(5.2,5.5), p(5.5,5), p(5.5,4.5), p(5.2,4), p(4.5,3.5), p(4.2,3))}
 end
 
 return API
